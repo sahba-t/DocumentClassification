@@ -67,7 +67,7 @@ def sweep_parametes():
         lambds = np.arange(0.001,0.01,0.001)    
         for etha in ethas:
             for lambd in lambds:
-                train_and_eval(etha=0.005, lambd=0.005, iters=iterations, delta=delta, X=training_data_sparse,\
+                train_and_eval(etha=etha, lambd=lambd, iters=iterations, delta=delta, X=training_data_sparse,\
                     XT=XT, file_ptr=out_stream)
 
 
