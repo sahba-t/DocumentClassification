@@ -38,7 +38,7 @@ def train_and_eval(etha, lambd, iters, delta, X, XT, file_ptr):
         if predicted == actual:
             correct += 1
     # etha, lambda, accuracy, iterations, time
-    file_ptr.write(F"{etha},{lambd},{correct * 100/predictions.shape[1]},{iters},{t1 - t0}\n")
+    file_ptr.write("%.2f,%.2f,%.4f,%d,%.2f\n" %(etha, lambd, correct * 100/predictions.shape[1], iters, t1 - t0))
     file_ptr.flush()
 
 
@@ -63,8 +63,8 @@ def sweep_parametes():
     delta = delta.tocsr()
     with open(file_name, 'w') as out_stream:
         out_stream.write(F"etha,lambda,accuracy,iterations,time\n")
-        ethas = np.arange(0.001,0.01,0.001)
-        lambds = np.arange(0.001,0.01,0.001)    
+        ethas = np.arange(0.001,0.0101,0.001)
+        lambds = np.arange(0.001,0.0101,0.001)    
         for etha in ethas:
             for lambd in lambds:
                 train_and_eval(etha=etha, lambd=lambd, iters=iterations, delta=delta, X=training_data_sparse,\
