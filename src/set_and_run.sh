@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#PBS -l walltime=08:00:00
+#PBS -l walltime=05:00:00
 #PBS -l nodes=1:ppn=2
 #PBS -N par_sweep
 #PBS -j oe
