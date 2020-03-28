@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+#PBS -l walltime=02:00:00
+#PBS -l nodes=1:ppn=8
+#PBS -N par_sweep
+#PBS -j oe
+
+
+cd $PBS_O_WORKDIR
+
+module load anaconda3-2019.07-gcc-4.8.5-pqb5ojq
+eta=0.001
+
+python parameter_sweep.py ${eta} 0.001& 
+python parameter_sweep.py ${eta} 0.003&
+python parameter_sweep.py ${eta} 0.004&
+python parameter_sweep.py ${eta} 0.005&
+python parameter_sweep.py ${eta} 0.006&
+python parameter_sweep.py ${eta} 0.008&
+python parameter_sweep.py ${eta} 0.009&
+python parameter_sweep.py ${eta} 0.01&
