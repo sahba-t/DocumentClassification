@@ -25,9 +25,11 @@ def make_sparse_training(for_bayes=False):
 
 
 def make_sparse_testing(for_bayes=False):
-    sparse_testing = lil_matrix((6774, 61188 if for_bayes else 61187), dtype=np.int16)
+    num_rows = 6774
+    num_cols = 61188 if for_bayes else 61187  # LR has extra column for 1
+    sparse_testing = lil_matrix((num_rows, num_cols), dtype=np.int16)
     if for_bayes:
-        sparse_testing[:, -1] = np.ones((6774, 1), dtype=np.int16)
+        sparse_testing[:, -1] = np.ones((num_rows, 1), dtype=np.int16)
 
     with open('../res/testing.csv', 'r') as train_stream:
         for i, line in enumerate(train_stream):
