@@ -16,7 +16,7 @@ def make_sparse_training(for_bayes=False):
                 sparse_training[i] = current_line[1:]
             else:
                 sparse_training[i, :-1] = current_line[1:-1]
-    out_path = '../res/' + 'nb' if for_bayes else 'lr' + '_training_data'
+    out_path = '../res/' + ('nb' if for_bayes else 'lr') + '_training_data'
     sparse.save_npz(out_path, sparse_training.tocsr())
     print(sparse_training)
     print(sparse_training.shape)
@@ -45,5 +45,5 @@ def make_sparse_testing(for_bayes=False):
     print(sparse_testing[2, -1])
 
 
-# make_sparse_training(for_bayes=True)
-make_sparse_testing(for_bayes=True)
+make_sparse_training(for_bayes=True)
+# make_sparse_testing(for_bayes=True)
