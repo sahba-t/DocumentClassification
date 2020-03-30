@@ -11,65 +11,9 @@ n = 61188
 K = 20
 training_labels = np.load('../res/lr_labels.npy')
 
-def train_and_eval(etha, lambd, iters, delta, X, train_ratio, file_ptr):
-    rows  = X.shape[0]
-    last_train_index = math.ceil(train_ratio * rows)
-    X_train = X[:last_train_index, :]
-    XT_train = X_train.transpose()
-    delta_train = delta[:, :last_train_index]
-    
-    if train_ratio == 1:
-        XT_eval = XT
-        delta_eval = delta
-        last_train_index = 0
-    else:
-        XT_eval = X[last_train_index:, :].transpose()
-        delta_eval = delta[:, last_train_index:]
-    
-    weights_matrix = np.random.rand(K, n + 1)
-    # weights_sparse is the W matrix in the pdf
-    weights_sparse = sparse.csr_matrix(weights_matrix, dtype=np.float)
-    # do training
-    t0 = time.time()
-    for i in range(iters):
-        pxy = weights_sparse * XT_train
-        #normalize before exp
-        pxy = pxy.multiply(1/pxy.sum(axis=0)).tocsr()
-        pxy = pxy.expm1().tocsr()
-        #normalize after exp to get probabilities
-        pxy = pxy.multiply(1/pxy.sum(axis=0)).tocsr()
-        diff_exp = delta_train - pxy
-        new_w = weights_sparse + etha * (diff_exp * X_train - weights_sparse.multiply(lambd))
-        weights_sparse = new_w
-    t1 = time.time()    
-    predictions = (weights_sparse * XT_eval)
-    predictions = predictions.multiply(1/predictions.sum(axis=0))
-    predictions = predictions.expm1()
-    predictions = predictions.multiply(1/predictions.sum(axis=0))
-    predictions = predictions.todense()
-    correct = 0
-    for i in range(predictions.shape[1]):
-        predicted = np.argmax(predictions[:, i]) + 1
-        actual = training_labels[i + last_train_index]
-        if predicted == actual:
-            correct += 1
-    
-    output_str = "%.3f,%.3f,%.4f,%d,%.2f\n" %(etha, lambd, correct * 100/predictions.shape[1], iters, t1 - t0)
-    if file_ptr:
-        # etha, lambda, accuracy, iterations, time
-        file_ptr.write(output_str)
-        file_ptr.flush()
-    else:
-        print(output_str)
-        sys.stdout.flush()
-    #saving the weights
-    matrix_file_name = "../res/weights_{}_{}_{}".format(etha, lambd, iters)
-    sparse.save_npz(matrix_file_name, weights_sparse)
-
-
 def sweep_parametes():
     file_name = "1000_runs" + ".json"
-    iterations = 10000
+    iterations = 3000
     #number of classes
     #training instances
     M = 12000
@@ -93,12 +37,90 @@ def sweep_parametes():
                 train_and_eval(etha=etha, lambd=lambd, iters=iterations, delta=delta, X=training_data_sparse,\
                 train_ratio=1, file_ptr=out_stream)
 
+def train_and_eval(etha, lambd, iters, delta, X, train_ratio, file_ptr):
+    rows  = X.shape[0]
+    last_train_index = math.ceil(train_ratio * rows)
+    X_train = X[:last_train_index, :]
+<<<<<<< Updated upstream
+    XT_train = X_train.transpose()
+    delta_train = delta[:, :last_train_index]
+    
+    if train_ratio == 1:
+        XT_eval = XT
+        delta_eval = delta
+        last_train_index = 0
+    else:
+        XT_eval = X[last_train_index:, :].transpose()
+        delta_eval = delta[:, last_train_index:]
+    
+=======
+    evaluation_interval = 1
+    XT_train = X_train.transpose()
+    XT_eval = X[last_train_index:, :].transpose()
+    delta_train = delta[:, :last_train_index]
+    delta_eval = delta[:, last_train_index:]
+>>>>>>> Stashed changes
+    weights_matrix = np.random.rand(K, n + 1)
+    # weights_sparse is the W matrix in the pdf
+    weights_sparse = sparse.csr_matrix(weights_matrix, dtype=np.float)
+    # do training
+    t0 = time.time()
+    max_weight = None
+    max_accuracy = -math.inf
+    max_iter = -1
+    for i in range(iters):
+        pxy = weights_sparse * XT_train
+        #normalize before exp
+        pxy = pxy.multiply(1/pxy.sum(axis=0)).tocsr()
+        pxy = pxy.expm1().tocsr()
+        #normalize after exp to get probabilities
+        pxy = pxy.multiply(1/pxy.sum(axis=0)).tocsr()
+        diff_exp = delta_train - pxy
+        new_w = weights_sparse + etha * (diff_exp * X_train - weights_sparse.multiply(lambd))
+        weights_sparse = new_w
+        if i % evaluation_interval == 0:
+            accuracy = evaluation(weights_sparse, XT_eval, last_train_index)
+            if accuracy > max_accuracy:
+                max_accuracy = accuracy
+                max_iter = i
+                max_weight = weights_sparse.copy()
+            # print("%.3f,%.3f,%.4f,%d,%.2f\n" %(etha, lambd, accuracy, i, time.time() - t0))
+
+    t1 = time.time()
+    accuracy = evaluation(weights_sparse, XT_eval, last_train_index)
+    output_str = "%.3f,%.3f,%.4f,%d,%.2f\n" %(etha, lambd, accuracy, max_iter, t1 - t0)
+    if file_ptr:
+        # etha, lambda, accuracy, iterations, time
+        file_ptr.write(output_str)
+        file_ptr.flush()
+    else:
+        print(output_str)
+        sys.stdout.flush()
+    #saving the weights
+    matrix_file_name = "../res/weights_{}_{}_{}".format(etha, lambd, iters)
+    sparse.save_npz(matrix_file_name, max_weight)
+
+def evaluation(weights_sparse, XT_eval, last_train_index):
+    predictions = (weights_sparse * XT_eval)
+    predictions = predictions.multiply(1/predictions.sum(axis=0))
+    predictions = predictions.expm1()
+    predictions = predictions.multiply(1/predictions.sum(axis=0))
+    predictions = predictions.todense()
+    correct = 0
+    for i in range(predictions.shape[1]):
+        predicted = np.argmax(predictions[:, i]) + 1
+        actual = training_labels[i + last_train_index]
+        if predicted == actual:
+            correct += 1
+
+    return correct / predictions.shape[1]
+
 
 def try_single_param():
     train_ratio = 0.85
     eta = float(sys.argv[1])
     lambd = float(sys.argv[2])
-    iterations = 10000
+    iterations = 3000
     #number of classes
     #training instances
     M = 12000
