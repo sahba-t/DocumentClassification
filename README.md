@@ -1,5 +1,5 @@
 # Document Classification 
-Sahba Tashakkori and Mauricio Monisavais 
+Sahba Tashakkori and Mauricio Monisivais 
 ## Kaggle Group Name
 Sahba: I'll choose the team name next...
 ## Requirements
