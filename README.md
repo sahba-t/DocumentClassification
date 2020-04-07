@@ -23,6 +23,7 @@ The python notebook containing tha logistic regression implementation and code t
 Makes different sparse_matrices to be used with LR and NB
 
 ### plot_lr_ps.py
-
+plots the results of parameter sweeps
 
 ### parameter_sweep.py
+The code that did actual training and parameter search. The division of training and evaluation data happens here
