@@ -37,29 +37,15 @@ def sweep_parametes():
                 train_and_eval(etha=etha, lambd=lambd, iters=iterations, delta=delta, X=training_data_sparse,\
                 train_ratio=1, file_ptr=out_stream)
 
-def train_and_eval(etha, lambd, iters, delta, X, train_ratio, file_ptr):
+def train_and_eval(etha, lambd, iters, delta, X, train_ratio, file_ptr, verbose=False, save_weights=True):
     rows  = X.shape[0]
     last_train_index = math.ceil(train_ratio * rows)
     X_train = X[:last_train_index, :]
-<<<<<<< Updated upstream
-    XT_train = X_train.transpose()
-    delta_train = delta[:, :last_train_index]
-    
-    if train_ratio == 1:
-        XT_eval = XT
-        delta_eval = delta
-        last_train_index = 0
-    else:
-        XT_eval = X[last_train_index:, :].transpose()
-        delta_eval = delta[:, last_train_index:]
-    
-=======
     evaluation_interval = 1
     XT_train = X_train.transpose()
     XT_eval = X[last_train_index:, :].transpose()
     delta_train = delta[:, :last_train_index]
     delta_eval = delta[:, last_train_index:]
->>>>>>> Stashed changes
     weights_matrix = np.random.rand(K, n + 1)
     # weights_sparse is the W matrix in the pdf
     weights_sparse = sparse.csr_matrix(weights_matrix, dtype=np.float)
@@ -85,10 +71,17 @@ def train_and_eval(etha, lambd, iters, delta, X, train_ratio, file_ptr):
                 max_iter = i
                 max_weight = weights_sparse.copy()
             # print("%.3f,%.3f,%.4f,%d,%.2f\n" %(etha, lambd, accuracy, i, time.time() - t0))
-
+            if verbose:
+                print("%.3f,%.3f,%.4f,%d,%.2f\n" %(etha, lambd, accuracy, i, time.time() - t0))
+                sys.stdout.flush()
     t1 = time.time()
     accuracy = evaluation(weights_sparse, XT_eval, last_train_index)
-    output_str = "%.3f,%.3f,%.4f,%d,%.2f\n" %(etha, lambd, accuracy, max_iter, t1 - t0)
+    if accuracy > max_accuracy:
+        max_accuracy = accuracy
+        max_iter = iters - 1
+        max_weight = weights_sparse
+
+    output_str = "%.3f,%.3f,%.4f,%d,%.2f\n" %(etha, lambd, max_accuracy, max_iter, t1 - t0)
     if file_ptr:
         # etha, lambda, accuracy, iterations, time
         file_ptr.write(output_str)
@@ -97,8 +90,9 @@ def train_and_eval(etha, lambd, iters, delta, X, train_ratio, file_ptr):
         print(output_str)
         sys.stdout.flush()
     #saving the weights
-    matrix_file_name = "../res/weights_{}_{}_{}".format(etha, lambd, iters)
-    sparse.save_npz(matrix_file_name, max_weight)
+    if save_weights:
+        matrix_file_name = "../res/weights_{}_{}_{}".format(etha, lambd, iters)
+        sparse.save_npz(matrix_file_name, max_weight)
 
 def evaluation(weights_sparse, XT_eval, last_train_index):
     predictions = (weights_sparse * XT_eval)
@@ -120,7 +114,7 @@ def try_single_param():
     train_ratio = 0.85
     eta = float(sys.argv[1])
     lambd = float(sys.argv[2])
-    iterations = 3000
+    iterations = 300
     #number of classes
     #training instances
     M = 12000
@@ -138,7 +132,7 @@ def try_single_param():
         delta[label - 1, i] = 1
     delta = delta.tocsr()
     train_and_eval(etha=eta, lambd=lambd, iters=iterations, delta=delta, X=training_data_sparse,\
-        train_ratio=train_ratio, file_ptr=None)
+                   train_ratio=train_ratio, file_ptr=None, verbose=True)
 
 if __name__ == "__main__":
     # sweep_parametes()
